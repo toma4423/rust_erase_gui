@@ -34,6 +34,18 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "executableName": "rust_erase_gui"
+    "identifier": "com.disk-eraser.app",
+    "macOS": {
+      "entitlements": null,
+      "exceptionDomain": "",
+      "frameworks": [],
+      "providerShortName": null,
+      "signingIdentity": null
+    },
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    }
   }
 }
