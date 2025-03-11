@@ -7,5 +7,5 @@
 /// Tauriフレームワークを使用して、RustバックエンドとReactフロントエンドを組み合わせています。
 
 fn main() {
-    tauri_app_lib::run()
+    disk_eraser_lib::run()
 }
