@@ -3,6 +3,7 @@
 /// このモジュールは、選択されたディスクの消去プロセスを管理します。
 /// ディスクの種類（HDD/SSD）に応じて適切な消去方法を選択します。
 
+use crate::disk_selection;
 use crate::hdd_erase;
 use crate::logger::log_message;
 use crate::ssd_erase;
@@ -24,27 +25,60 @@ pub fn start(selected_disks: &Vec<String>) -> Result<(), String> {
         &format!("選択されたディスク: {:?}", selected_disks),
     );
 
+    // 利用可能なディスク情報を取得
+    let available_disks = disk_selection::get_available_disks();
+
     let errors: Vec<String> = selected_disks
         .par_iter()
-        .map(|disk| {
+        .map(|disk_path| {
             log_message(
-                &format!("{}の消去開始", disk),
+                &format!("{}の消去開始", disk_path),
                 "進行中",
                 "ディスク消去プロセスを開始します。",
             );
 
-            let result = if disk.contains("HDD") {
-                hdd_erase::erase_hdd_with_dod5220(disk)
-            } else if disk.contains("SSD") {
-                ssd_erase::secure_erase_ssd(disk)
-            } else {
-                Err(format!("不明なディスクタイプ: {}。スキップします...", disk))
+            // 選択されたディスクパスに対応するディスク情報を検索
+            let disk_info = available_disks.iter().find(|d| d.device_name == *disk_path);
+
+            let result = match disk_info {
+                Some(info) => {
+                    if info.device_type == "HDD" {
+                        log_message(
+                            &format!("{}はHDDとして検出されました", disk_path),
+                            "情報",
+                            "DoD 5220.22-M方式で消去します。",
+                        );
+                        hdd_erase::erase_hdd_with_dod5220(disk_path)
+                    } else if info.device_type == "SSD" {
+                        log_message(
+                            &format!("{}はSSDとして検出されました", disk_path),
+                            "情報",
+                            "Secure Erase方式で消去します。",
+                        );
+                        ssd_erase::secure_erase_ssd(disk_path)
+                    } else {
+                        log_message(
+                            &format!("{}は不明なディスクタイプです: {}", disk_path, info.device_type),
+                            "警告",
+                            "ディスクタイプが不明なため、消去をスキップします。",
+                        );
+                        Err(format!("不明なディスクタイプ: {}。スキップします...", info.device_type))
+                    }
+                },
+                None => {
+                    log_message(
+                        &format!("{}の情報が見つかりません", disk_path),
+                        "エラー",
+                        "ディスク情報が取得できないため、消去をスキップします。",
+                    );
+                    Err(format!("ディスク情報が見つかりません: {}。スキップします...", disk_path))
+                }
             };
 
             match result {
                 Ok(_) => {
                     log_message(
-                        &format!("{}の消去完了", disk),
+                        &format!("{}の消去完了", disk_path),
                         "成功",
                         "ディスクは正常に消去されました。",
                     );
@@ -52,7 +86,7 @@ pub fn start(selected_disks: &Vec<String>) -> Result<(), String> {
                 }
                 Err(e) => {
                     log_message(
-                        &format!("{}の消去失敗", disk),
+                        &format!("{}の消去失敗", disk_path),
                         "エラー",
                         &e,
                     );
