@@ -34,7 +34,6 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "identifier": "com.disk-eraser.app",
     "macOS": {
       "entitlements": null,
       "exceptionDomain": "",
