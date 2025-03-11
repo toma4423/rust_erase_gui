@@ -39,6 +39,8 @@ jobs:
               draft: true,
               prerelease: false
             });
+            console.log('Created release', data);
+            console.log('Upload URL:', data.upload_url);
             return { id: data.id, upload_url: data.upload_url };
 
   build-linux:
@@ -67,15 +69,16 @@ jobs:
           cp src-tauri/target/release/rust_erase_gui dist/
           chmod +x dist/rust_erase_gui
           
+      - name: Debug output
+        run: |
+          echo "Release ID: ${{ needs.create-release.outputs.release_id }}"
+          echo "Upload URL: ${{ needs.create-release.outputs.upload_url }}"
+          
       - name: Upload Linux binary
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./dist/rust_erase_gui
-          asset_name: rust_erase_gui
-          asset_content_type: application/octet-stream
+          files: ./dist/rust_erase_gui
+          token: ${{ secrets.GITHUB_TOKEN }}
           
   publish-release:
     runs-on: ubuntu-latest
